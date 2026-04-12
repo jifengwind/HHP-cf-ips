@@ -1,0 +1,35 @@
+name: Cloudflare IP Speed Test
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # 每小时执行
+  workflow_dispatch:      # 允许手动触发
+
+jobs:
+  speed-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Run speed test
+        run: node speedtest.js
+        
+      - name: Commit and push results
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          if git diff --quiet ips.txt; then
+            echo "No changes in ips.txt"
+          else
+            git add ips.txt last-update.txt
+            git commit -m "Update preferred IPs [skip ci]"
+            git push
+          fi
