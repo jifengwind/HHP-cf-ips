@@ -8,7 +8,7 @@ const PORT = 443;               // 目标端口
 const IP_SOURCES = [
     'https://ip.164746.xyz',                                    // 源1：原配置，可直接抓取
     'https://www.wetest.vip/page/cloudflare/address_v4.html',    // 源2：微测网，页面包含IP表格
-    ''https://stock.hostmonit.com/CloudFlareYes''                               // 源3：VPS789，目前返回404，暂时注释，待确认新地址后启用
+    'https://stock.hostmonit.com/CloudFlareYes'                  // 源3：
 ];
 // =================================================
 
