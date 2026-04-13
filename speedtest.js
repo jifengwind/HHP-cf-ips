@@ -6,11 +6,7 @@ const PORT = 443;
 
 // 多个公开优选源
 const IP_SOURCES = [
-    'https://raw.githubusercontent.com/cmliu/CF-Workers-SUB/main/ADD.txt',
-    'https://raw.githubusercontent.com/ip-scanner/cloudflare/main/ips.txt',
-    'https://cf.090227.xyz',
-    'https://ip.164746.xyz',
-    'https://www.cloudflare.com/ips-v4'
+    'https://ip.164746.xyz'
 ];
 // =================================================
 
