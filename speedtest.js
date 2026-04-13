@@ -1,12 +1,14 @@
 const fs = require('fs');
 
 // ==================== 配置区 ====================
-const TOP_COUNT = 40;
-const PORT = 443;
+const TOP_COUNT = 40;           // 最终选取的IP数量
+const PORT = 443;               // 目标端口
 
 // 多个公开优选源
 const IP_SOURCES = [
-    'https://ip.164746.xyz'
+    'https://ip.164746.xyz',                                    // 源1：原配置，可直接抓取
+    'https://www.wetest.vip/page/cloudflare/address_v4.html'    // 源2：微测网，页面包含IP表格
+    // 'https://vps789.com/cfip/'                               // 源3：VPS789，目前返回404，暂时注释，待确认新地址后启用
 ];
 // =================================================
 
@@ -86,12 +88,13 @@ async function fetchIPsFromSource(url) {
         clearTimeout(timeout);
 
         if (!res.ok) {
-            console.log(`失败: HTTP ${res.status}`);
+            console.log(`  失败: HTTP ${res.status}`);
             return [];
         }
 
         const text = await res.text();
-
+        
+        // 通用IP提取正则，适用于大多数包含IP的页面
         const ipPattern = /(\d{1,3}(?:\.\d{1,3}){3})/g;
         const ips = [];
 
@@ -103,10 +106,10 @@ async function fetchIPsFromSource(url) {
             }
         }
 
-        console.log(`成功获取 ${ips.length} 个IP`);
+        console.log(`  成功获取 ${ips.length} 个IP`);
         return ips;
     } catch (e) {
-        console.log(`获取失败: ${e.message}`);
+        console.log(`  获取失败: ${e.message}`);
         return [];
     }
 }
@@ -117,10 +120,11 @@ function stableSortIPs(ips) {
         const ispA = detectISP(a);
         const ispB = detectISP(b);
 
+        // 按运营商排序：电信、联通、移动、多线
         if (ispA !== ispB) {
             return ispA.localeCompare(ispB);
         }
-
+        // 同运营商内按IP排序
         return a.localeCompare(b);
     });
 }
@@ -150,38 +154,41 @@ async function main() {
     // 截取前 TOP_COUNT
     const finalIPs = ipArray.slice(0, TOP_COUNT);
 
+    // 按所需格式生成输出行
     const lines = finalIPs.map(ip => {
         return `${ip}:${PORT}#${detectISP(ip)}优选`;
     });
 
+    // 写入文件
     fs.writeFileSync('ips.txt', lines.join('\n'));
     fs.writeFileSync('last-update.txt', new Date().toISOString());
 
-    console.log(`\n已生成 ${finalIPs.length} 个IP`);
-    console.log('文件已写入: ips.txt');
+    console.log(`\n✅ 已生成 ${finalIPs.length} 个IP，格式：IP:${PORT}#运营商优选`);
+    console.log('📁 文件已写入: ips.txt');
 
+    // 统计运营商分布
     const stats = {};
     finalIPs.forEach(ip => {
         const isp = detectISP(ip);
         stats[isp] = (stats[isp] || 0) + 1;
     });
 
-    console.log('\n运营商分布:');
+    console.log('\n📊 运营商分布:');
     Object.entries(stats).forEach(([isp, count]) => {
-        console.log(`${isp}: ${count}`);
+        console.log(`   ${isp}: ${count}`);
     });
 
-    console.log('\n前10个IP:');
+    console.log('\n📋 前10个IP预览:');
     finalIPs.slice(0, 10).forEach((ip, index) => {
-        console.log(`${index + 1}. ${ip}:${PORT}`);
+        console.log(`   ${index + 1}. ${ip}:${PORT}#${detectISP(ip)}优选`);
     });
 
-    console.log('\n更新时间:', new Date().toLocaleString('zh-CN', {
+    console.log('\n⏰ 更新时间:', new Date().toLocaleString('zh-CN', {
         timeZone: 'Asia/Shanghai'
     }));
 }
 
 main().catch(err => {
-    console.error('执行失败:', err.message);
+    console.error('❌ 执行失败:', err.message);
     process.exit(1);
 });
