@@ -7,8 +7,8 @@ const PORT = 443;               // 目标端口
 // 多个公开优选源
 const IP_SOURCES = [
     'https://ip.164746.xyz',                                    // 源1：原配置，可直接抓取
-    'https://www.wetest.vip/page/cloudflare/address_v4.html',    // 源2：微测网，页面包含IP表格
-   'https://bestip.badking.pp.ua/'                 // 源3：
+    'https://www.wetest.vip/page/cloudflare/address_v4.html',   // 源2：微测网，页面包含IP表格
+    'https://bestip.badking.pp.ua/'                             // 源3：优选IP站
 ];
 // =================================================
 
@@ -45,28 +45,35 @@ function detectISP(ip) {
     return '多线';
 }
 
-// 更严谨的无效IP过滤
+// 更简单、更准确的公网 IPv4 校验
+// 既然数据源都是别人筛选过的可靠 IP，只需排除明显的私网/保留地址即可
 function isValidPublicIP(ip) {
     const parts = ip.split('.').map(Number);
 
+    // 1. 必须是 4 段数字
     if (parts.length !== 4) return false;
+    
+    // 2. 每段数字必须在 0-255 范围内
     if (parts.some(n => isNaN(n) || n < 0 || n > 255)) return false;
 
-    // 私网/保留地址过滤
-    if (parts[0] === 0) return false;
+    // 3. 只排除最常见的私网和保留地址（这些绝对不可能是 CDN IP）
+    // 10.0.0.0/8
     if (parts[0] === 10) return false;
+    // 127.0.0.0/8 (本地回环)
     if (parts[0] === 127) return false;
+    // 169.254.0.0/16 (链路本地)
     if (parts[0] === 169 && parts[1] === 254) return false;
+    // 192.168.0.0/16
     if (parts[0] === 192 && parts[1] === 168) return false;
+    
+    // 172.16.0.0/12 私网范围（这才是正确的边界）
+    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return false;
 
-    // 172.16 - 172.31
-    if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) {
-        return false;
-    }
-
-    // multicast / reserved
+    // 组播和保留地址 (224.0.0.0/4 和 240.0.0.0/4)
     if (parts[0] >= 224) return false;
 
+    // 其他所有格式正确的 IPv4 地址都视为合法公网 IP
+    // Cloudflare 的 172.64.x.x - 172.70.x.x 等网段不会被误判
     return true;
 }
 
@@ -81,7 +88,7 @@ async function fetchIPsFromSource(url) {
         const res = await fetch(url, {
             signal: controller.signal,
             headers: {
-                'User-Agent': 'Mozilla/5.0'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
 
