@@ -7,9 +7,9 @@ const PORT = 443;               // 目标端口
 // 多个公开优选源
 const IP_SOURCES = [
     'https://ip.164746.xyz',                                    // 源1：原配置，可直接抓取
-    'https://www.wetest.vip/page/cloudflare/address_v4.html',   // 源2：微测网，页面包含IP表格
-    'https://bestip.badking.pp.ua/',  // 源3：优选IP站
-    'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/BestCF/bestcfv4.txt'
+    //'https://www.wetest.vip/page/cloudflare/address_v4.html',   // 源2：微测网，页面包含IP表格
+    //'https://bestip.badking.pp.ua/',  // 源3：优选IP站
+    //'https://raw.githubusercontent.com/ymyuuu/IPDB/refs/heads/main/BestCF/bestcfv4.txt'
 ];
 // =================================================
 
