@@ -21,9 +21,22 @@ jobs:
           node-version: '20'
       - name: Collect IPs
         run: node speedtest.js
+      - name: Process and deduplicate IPs
+        run: |
+          # 如果 ips-dj.txt 不存在则创建
+          touch ips-dj.txt
+          
+          # 将新采集的 IP 追加到 ips-dj.txt
+          cat ips.txt >> ips-dj.txt
+          
+          # 对 ips-dj.txt 进行去重并排序
+          sort -u ips-dj.txt -o ips-dj.txt
+          
+          # 可选：移除空行
+          sed -i '/^$/d' ips-dj.txt
       - name: Commit results
         run: |
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
-          git add ips.txt last-update.txt
+          git add ips.txt last-update.txt ips-dj.txt
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update IPs" && git push)
